@@ -1,0 +1,56 @@
+# Sentiment Analysis
+
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from sklearn.naive_bayes import MultinomialNB
+
+# Load the dataset
+df = pd.read_csv('E:/sentiment_codeclause/archive/train.csv',delimiter=',', encoding='ISO-8859-1')
+
+# Drop the rows with missing values in the selected_text and sentiment columns
+df.dropna(subset=['selected_text', 'sentiment'], inplace=True)
+
+# Define a function to convert sentiment labels to numeric values
+def sentiment_to_numeric(x):
+    if x == 'positive':
+        return 1
+    elif x == 'negative':
+        return -1
+    else:
+        return 0
+
+# Apply the function to the sentiment column to convert labels to numeric values
+df['sentiment_numeric'] = df['sentiment'].apply(sentiment_to_numeric)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(df['text'], df['sentiment_numeric'], random_state=42)
+
+# Vectorize the text data using TF-IDF
+tfidf = TfidfVectorizer()
+X_train_tfidf = tfidf.fit_transform(X_train)
+X_test_tfidf = tfidf.transform(X_test)
+
+# Train a Naive Bayes classifier on the training data
+nb = MultinomialNB()
+nb.fit(X_train_tfidf, y_train)
+
+# Make predictions on the testing data
+y_pred = nb.predict(X_test_tfidf)
+
+# Convert numeric predictions back to sentiment labels
+y_pred_sentiment = np.where(y_pred==1, 'positive', np.where(y_pred==-1, 'negative', 'neutral'))
+print(y_pred_sentiment)
+
+# Calculate the accuracy of the classifier
+accuracy = accuracy_score(df['sentiment'][y_test.index], y_pred_sentiment)
+
+print('Accuracy:', accuracy)
+
+
+
+
+
+
